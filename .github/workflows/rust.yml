@@ -7,14 +7,14 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
-        - aarch64-unknown-linux-gnu
-        - arm-unknown-linux-gnueabi
-        - armv7-unknown-linux-gnueabihf
-        - x86_64-unknown-linux-gnu
+        - aarch64-unknown-linux-musl
+        - arm-unknown-linux-musleabi
+        - armv7-unknown-linux-musleabihf
+        - x86_64-unknown-linux-musl
 
     steps:
     - uses: actions/checkout@v2
@@ -43,32 +43,11 @@ jobs:
       with:
         name: ruuvitag-listener-${{ matrix.target }}.tar.gz
         path: ruuvitag-listener.tar.gz
-  crates_io_publish:
-    name: Publish to crates.io
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-        profile: minimal
-    - name: Login to crates.io
-      run: cargo login $CRATES_IO_TOKEN
-      env:
-        CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-    - name: Dry run publish
-      run: cargo publish --dry-run
-    - name: Publish
-      run: cargo publish
   create_release:
     name: Create release
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
@@ -86,14 +65,14 @@ jobs:
     name: Upload release assets
     if: startsWith(github.ref, 'refs/tags/v')
     needs: create_release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
-        - aarch64-unknown-linux-gnu
-        - arm-unknown-linux-gnueabi
-        - armv7-unknown-linux-gnueabihf
-        - x86_64-unknown-linux-gnu
+        - aarch64-unknown-linux-musl
+        - arm-unknown-linux-musleabi
+        - armv7-unknown-linux-musleabihf
+        - x86_64-unknown-linux-musl
     steps:
     - id: vars
       run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
@@ -111,7 +90,7 @@ jobs:
         asset_name: ruuvitag-listener-${{ steps.vars.outputs.version }}-${{ matrix.target }}.tar.gz
         asset_content_type: application/gzip
   rustfmt:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -126,7 +105,7 @@ jobs:
       run: |
         cargo fmt --all -- --check
   clippy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
